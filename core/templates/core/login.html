@@ -1,0 +1,94 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Entrar | Pets Hub{% endblock %}
+{% block page_title %}Entrar{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] flex items-center justify-center">
+  <div class="w-full max-w-md">
+
+    <!-- Card -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+
+      <!-- Header -->
+      <div class="px-8 pt-8 pb-6 text-center border-b border-gray-100 dark:border-gray-800">
+        <div class="w-14 h-14 rounded-2xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-3xl mx-auto mb-4">🐾</div>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Bem-vindo de volta</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Entre na sua conta para continuar</p>
+      </div>
+
+      <!-- Form -->
+      <div class="px-8 py-6">
+        <form method="post" class="space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}" />
+
+          {% if login_form.non_field_errors %}
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            {{ login_form.non_field_errors }}
+          </div>
+          {% endif %}
+
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="id_username">Usuário</label>
+            {{ login_form.username }}
+            {% if login_form.username.errors %}
+              <p class="text-xs text-red-600 dark:text-red-400">{{ login_form.username.errors|join:', ' }}</p>
+            {% endif %}
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="id_password">Senha</label>
+            {{ login_form.password }}
+            {% if login_form.password.errors %}
+              <p class="text-xs text-red-600 dark:text-red-400">{{ login_form.password.errors|join:', ' }}</p>
+            {% endif %}
+          </div>
+
+          <button type="submit"
+            class="w-full bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors text-sm mt-2">
+            Entrar
+          </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-5">
+          Não tem conta?
+          <a href="{% url 'register' %}" class="font-medium text-brand-600 dark:text-brand-400 hover:underline">Criar conta</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #id_username, #id_password {
+    display: block;
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 0.875rem;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  #id_username:focus, #id_password:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    background: #fff;
+  }
+  .dark #id_username, .dark #id_password {
+    background: #111827;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+  .dark #id_username:focus, .dark #id_password:focus {
+    border-color: #22c55e;
+    background: #1f2937;
+  }
+</style>
+{% endblock %}

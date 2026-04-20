@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Selecionar Pet | Pets Hub{% endblock %}
+{% block page_title %}Fazer Check-in{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <h2 class="font-semibold text-gray-900 dark:text-white">Selecionar pet</h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Escolha o pet para registrar a atividade</p>
+    </div>
+
+    {% if pets %}
+    <div class="divide-y divide-gray-100 dark:divide-gray-800">
+      {% for pet in pets %}
+      <div class="flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-xl shrink-0">
+            {% if pet.species|lower == 'gato' or pet.species|lower == 'cat' %}🐱
+            {% elif pet.species|lower == 'cachorro' or pet.species|lower == 'dog' %}🐶
+            {% elif pet.species|lower == 'pássaro' or pet.species|lower == 'bird' %}🐦
+            {% elif pet.species|lower == 'coelho' or pet.species|lower == 'rabbit' %}🐰
+            {% else %}🐾{% endif %}
+          </div>
+          <div>
+            <p class="font-medium text-gray-900 dark:text-white">{{ pet.name }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ pet.species|default:'Espécie não informada' }}</p>
+          </div>
+        </div>
+        <a href="{% url 'checkin_create' pet_id=pet.pk %}"
+           class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Check-in
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-16 px-5 text-center">
+      <span class="text-5xl mb-4">🐾</span>
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Nenhum pet cadastrado</h3>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Você precisa cadastrar um pet antes de fazer check-in.</p>
+      <a href="{% url 'pet_create' %}"
+         class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Cadastrar pet
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

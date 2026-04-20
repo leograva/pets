@@ -1,0 +1,218 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Check-in | Pets Hub{% endblock %}
+{% block page_title %}Registrar Check-in{% endblock %}
+
+{% block content %}
+<div class="max-w-lg">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+
+    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center text-xl shrink-0">🐾</div>
+        <div>
+          <h2 class="font-semibold text-gray-900 dark:text-white">Check-in para {{ pet.name }}</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Registre uma atividade do seu pet</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <form method="post" id="checkin-form" class="space-y-4">
+        {% csrf_token %}
+        <!-- hidden field that carries the base64 photo -->
+        <input type="hidden" name="photo_data" id="photo_data" />
+
+        {% if form.non_field_errors %}
+        <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+        <div class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-red-500 ml-0.5">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+          {% endif %}
+          {% if field.errors %}
+            <p class="text-xs text-red-600 dark:text-red-400">{{ field.errors|join:', ' }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- ── Camera section ── -->
+        <div class="space-y-2">
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Foto do momento <span class="text-gray-400 font-normal">(opcional)</span></p>
+
+          <!-- Preview / placeholder -->
+          <div id="camera-placeholder"
+               class="relative w-full aspect-video rounded-xl bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center gap-2 cursor-pointer select-none"
+               onclick="startCamera()">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Toque para abrir a câmera</p>
+          </div>
+
+          <!-- Live camera feed -->
+          <div id="camera-container" class="hidden space-y-2">
+            <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+              <video id="camera-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+              <!-- Shutter button overlay -->
+              <button type="button" onclick="capturePhoto()"
+                class="absolute bottom-3 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white shadow-lg border-4 border-gray-200 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center">
+                <div class="w-10 h-10 rounded-full bg-white border-2 border-gray-400"></div>
+              </button>
+            </div>
+            <button type="button" onclick="stopCamera()"
+              class="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-1 transition-colors">
+              Cancelar câmera
+            </button>
+          </div>
+
+          <!-- Captured photo preview -->
+          <div id="photo-preview" class="hidden space-y-2">
+            <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+              <img id="photo-img" src="" alt="Foto capturada" class="w-full h-full object-cover" />
+              <div class="absolute top-2 right-2">
+                <span class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                  Foto capturada
+                </span>
+              </div>
+            </div>
+            <button type="button" onclick="retakePhoto()"
+              class="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-1 transition-colors">
+              Tirar outra foto
+            </button>
+          </div>
+
+          <!-- Hidden canvas used for capture -->
+          <canvas id="capture-canvas" class="hidden"></canvas>
+        </div>
+
+        <!-- Info -->
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800">
+          <svg class="w-5 h-5 text-brand-600 dark:text-brand-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm text-brand-700 dark:text-brand-300">Os pontos são calculados automaticamente com base no tipo de atividade.</p>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="submit"
+            class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors text-sm">
+            Registrar
+          </button>
+          <a href="{% url 'pet_detail' pk=pet.pk %}"
+             class="flex-1 text-center text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 py-2.5 px-4 rounded-xl transition-colors">
+            Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  form input[type="text"],
+  form input[type="date"],
+  form input[type="datetime-local"],
+  form select,
+  form textarea {
+    display: block; width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font-size: 0.875rem; color: #111827;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+  }
+  form input:focus, form select:focus, form textarea:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.15);
+    background: #fff;
+  }
+  .dark form input, .dark form select, .dark form textarea {
+    background: #111827; border-color: #374151; color: #f9fafb;
+  }
+  .dark form input:focus, .dark form select:focus, .dark form textarea:focus {
+    border-color: #22c55e; background: #1f2937;
+  }
+</style>
+
+<script>
+  let stream = null;
+
+  async function startCamera() {
+    document.getElementById('camera-placeholder').classList.add('hidden');
+    document.getElementById('camera-container').classList.remove('hidden');
+
+    try {
+      // Prefer rear camera on mobile
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      document.getElementById('camera-video').srcObject = stream;
+    } catch (err) {
+      // Fallback: any camera
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('camera-video').srcObject = stream;
+      } catch (e) {
+        alert('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
+        stopCamera();
+      }
+    }
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('camera-video');
+    const canvas = document.getElementById('capture-canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    document.getElementById('photo_data').value = dataUrl;
+    document.getElementById('photo-img').src = dataUrl;
+
+    stopCamera(false);
+    document.getElementById('camera-container').classList.add('hidden');
+    document.getElementById('photo-preview').classList.remove('hidden');
+  }
+
+  function stopCamera(showPlaceholder = true) {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    document.getElementById('camera-video').srcObject = null;
+    document.getElementById('camera-container').classList.add('hidden');
+    if (showPlaceholder) {
+      document.getElementById('camera-placeholder').classList.remove('hidden');
+    }
+  }
+
+  function retakePhoto() {
+    document.getElementById('photo_data').value = '';
+    document.getElementById('photo-preview').classList.add('hidden');
+    startCamera();
+  }
+
+  // Stop camera if user navigates away
+  window.addEventListener('beforeunload', () => stopCamera(false));
+</script>
+{% endblock %}
